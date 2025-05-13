@@ -1,17 +1,13 @@
-using System.ComponentModel;
 using System.Diagnostics;
-using System.IO.Compression;
 using SharpCompress.Archives;
 using SharpCompress.Archives.SevenZip;
 
-namespace VidPipe;
+namespace VidPipe.FFmpeg;
 
 public static class FFmpeg
 {
     private static readonly string _installPath;
-
     public static string InstallPath => _installPath;
-
     private const string _ffInstall = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-essentials.7z"; 
 
     private static bool TestForFFmpeg(string path = "")
@@ -57,6 +53,8 @@ public static class FFmpeg
 
         return TestForFFmpeg(Program.AppDataPath);
     }
+    
+    
 
     static FFmpeg()
     {
