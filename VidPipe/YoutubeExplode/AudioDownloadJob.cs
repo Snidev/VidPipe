@@ -7,6 +7,7 @@ namespace VidPipe.YoutubeExplode;
 public class AudioDownloadJob : IDisposable, IAsyncDisposable
 {
     public readonly Stream Stream;
+    public readonly Video Video;
     public long BytesWritten => Stream.Position;
     public readonly long TotalBytes;
 
@@ -18,12 +19,13 @@ public static async Task<AudioDownloadJob> CreateAudioStream(string link)
         IStreamInfo si = manifest.GetAudioOnlyStreams().GetWithHighestBitrate();
         Stream stream = await client.Videos.Streams.GetAsync(si);
 
-        return new AudioDownloadJob(si, stream);
+        return new AudioDownloadJob(si, video, stream);
     }
 
-    private AudioDownloadJob(IStreamInfo streamInfo, Stream stream, int progressUpdateFreq = 1000)
+    private AudioDownloadJob(IStreamInfo streamInfo, Video video, Stream stream)
     {
         Stream = stream;
+        Video = video;
         TotalBytes = streamInfo.Size.Bytes;
     }
 
