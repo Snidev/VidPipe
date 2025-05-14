@@ -14,10 +14,4 @@
       <PackageReference Include="YoutubeExplode" Version="6.5.4" />
     </ItemGroup>
 
-    <ItemGroup>
-      <None Update="test.csv">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
 </Project>
