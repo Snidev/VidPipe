@@ -3,7 +3,7 @@ using System.IO.Pipelines;
 
 namespace VidPipe.FFmpeg;
 
-public class AudioExtractor(Stream input, string outputFile, AudioCodec codec, ulong bitrate, Stream? err = null) : IFfJob
+public class AudioExtractor(Stream input, string outputFile, AudioCodec codec, ulong bitrate, Stream? err = null, string? startTs = null, string? endTs = null) : IFfJob
 {
     public readonly AudioCodec Codec = codec;
     
@@ -14,7 +14,7 @@ public class AudioExtractor(Stream input, string outputFile, AudioCodec codec, u
             StartInfo = new ProcessStartInfo
             {
                 FileName = Path.Combine(Program.AppDataPath, "ffmpeg.exe"),
-                Arguments = $"-i pipe:0 -vn -c:a {Codec.GetCodecName()} -b:a {bitrate} -f {Codec.GetFormat()} pipe:1",
+                Arguments = $"{startTs ?? "-ss" + startTs} {endTs ?? "-to" + endTs} -i pipe:0 -vn -c:a {Codec.GetCodecName()} -b:a {bitrate} -f {Codec.GetFormat()} pipe:1",
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -35,6 +35,7 @@ public class AudioExtractor(Stream input, string outputFile, AudioCodec codec, u
             Task.Run(async () =>
             {
                 await ffmpeg.StandardOutput.BaseStream.CopyToAsync(outFile);
+                await outFile.FlushAsync();
             }),
             Task.Run(async () =>
             {
