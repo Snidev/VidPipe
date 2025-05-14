@@ -10,7 +10,7 @@ public enum AudioCodec
     Vorbis,
     Flac,
     Wav,
-    Pcm = Wav,
+    Pcm,
     Alac
 }
 
@@ -22,8 +22,22 @@ public static class AudioCodecExtensions
         AudioCodec.Aac => "aac",
         AudioCodec.Opus => "libopus",
         AudioCodec.Vorbis => "libvorbis",
-        AudioCodec.Pcm => "pcm_s16le",
+        AudioCodec.Pcm or AudioCodec.Wav => "pcm_s16le",
         AudioCodec.Alac => "alac",
+        AudioCodec.Flac => "flac",
+        _ => throw new InvalidEnumArgumentException()
+    };
+    
+    public static string GetFormat(this AudioCodec codec) => codec switch
+    {
+        AudioCodec.Mp3 => "mp3",
+        AudioCodec.Aac => "adts",
+        AudioCodec.Opus => "opus",
+        AudioCodec.Vorbis => "ogg",
+        AudioCodec.Pcm => "s16le",
+        AudioCodec.Wav => "wav",
+        AudioCodec.Alac => "ipod",
+        AudioCodec.Flac => "flac",
         _ => throw new InvalidEnumArgumentException()
     };
 }
