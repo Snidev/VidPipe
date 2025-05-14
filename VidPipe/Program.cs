@@ -1,6 +1,8 @@
 ﻿using static System.Environment;
 using System.CommandLine;
 using System.Diagnostics;
+using System.Globalization;
+using CsvHelper;
 using VidPipe.FFmpeg;
 using VidPipe.YoutubeExplode;
 
@@ -47,9 +49,42 @@ class Program
         Console.WriteLine($"Successfully output to {outFile}");
     }
 
-    private static void BulkDownload(string csv, string outFolder)
+    record struct VideoRecord(string Link, string Start, string End);
+    private static async Task BulkDownload(string csvPath, string outFolder)
     {
-        
+        VideoRecord[] records;
+        using (StreamReader reader = new(csvPath))
+        using (CsvReader csv = new(reader, CultureInfo.InvariantCulture))
+        {
+            records = csv.GetRecords<VideoRecord>().ToArray();
+        }
+
+        foreach (VideoRecord record in records)
+        {
+            AudioDownloadJob download = null;
+            try
+            {
+                Console.WriteLine($"Beginning download of {record.Link}");
+                download = await AudioDownloadJob.CreateAudioStream(record.Link);
+                string fileName = Path.Combine(outFolder, download.Video.Id + ".mp3");
+                AudioExtractor audio = new(download.Stream, fileName, AudioCodec.Mp3, 193000, null, record.Start, record.End);
+
+                int code = await audio.RunAsync();
+                
+                Console.Write($"Job {record.Link} finished with code {code}");
+                if (code == 0)
+                    Console.WriteLine($" output to {fileName}");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Could not save {record.Link} ({e.GetType()})");
+            }
+            finally
+            {
+                download?.Dispose();
+                Thread.Sleep(1000);
+            }
+        }
     }
 
     private static RootCommand SetupCommands()
@@ -69,10 +104,20 @@ class Program
         
         audioCmd.Add(videoOpt);
         audioCmd.Add(outOpt);
-        
         audioCmd.SetHandler(GetAudioSingle, videoOpt, outOpt);
-
         root.Add(audioCmd);
+
+        Command bulkAudioCmd = new("bulkaudio", "Download multiple audio samples as provided by a csv");
+        Option<string> csvOpt = new(["--csv", "-c"], "The path to a csv with the videos and timestamps")
+            { IsRequired = true };
+        Option<string> outFolderOpt = new(["--output", "-o"], "The output folder for all videos") 
+            { IsRequired = true };
+        
+        bulkAudioCmd.Add(csvOpt);
+        bulkAudioCmd.Add(outFolderOpt);
+        bulkAudioCmd.SetHandler(BulkDownload, csvOpt, outFolderOpt);
+        root.Add(bulkAudioCmd);
+        
         return root;
     }
     
